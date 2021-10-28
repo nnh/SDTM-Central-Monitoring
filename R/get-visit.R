@@ -63,6 +63,16 @@ input_visitlist <- input_visitlist[order(input_visitlist[ , kVisitListVisitnumCo
 # ------ Merge dataframes ------
 raw_colnames <- colnames(input_fa)
 by_x_col_idx <- grep(x=raw_colnames, pattern=paste0('^', kColnameVisitnum, '$'), ignore.case=T)
-input_fa <- merge(input_fa, input_visitlist, by.x=by_x_col_idx, by.y=kVisitListVisitnumCol)
+temp <- merge(input_fa, input_visitlist, by.x=by_x_col_idx, by.y=kVisitListVisitnumCol)
 # Restore the columns to their original order.
+output_fa <- NULL
+output_colnames <- c(raw_colnames, kColnameVisit)
+for (i in 1:length(output_colnames)){
+  from_idx <- grep(x=colnames(temp), pattern=paste0('^', output_colnames[i], '$'), ignore.case=T)
+  if (i != 1){
+    output_fa[i] <- temp[from_idx]
 
+  } else {
+    output_fa <- temp[from_idx]
+  }
+}
