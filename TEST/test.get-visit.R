@@ -29,8 +29,8 @@ if (!file.exists(test_dir)){
   dir.create(test_dir)
 }
 # 比較対象データフレーム
-id <- c(1, 2, 2, 4, 6, 7, 8, 9)
-visitnum <- c(100, 100, 110, 300, 400, NA, '', 1000) %>% as.numeric()
+id <- c(1, 2, 2, 4, 6, 7, 8, 9) %>% as.integer()
+visitnum <- c(100, 100, 110, 300, 400, NA, '', 1000) %>% as.integer()
 test_rawdata <- data.frame(id, visitnum)
 test_rawdata_filename <- 'FA.csv'
 test_rawdata %>% write.table(str_c(test_dir, '/', test_rawdata_filename), append=F, row.names=F, sep=',')
@@ -91,7 +91,7 @@ for (i in 1:(dataframe_count - 1)){
   save_i <- i
   source(here('R', 'get-visit.R'))
   i <- save_i
-  output_fa <- read.csv(str_c(test_dir, '/', 'output.csv'))
+  output_fa <- read.csv(str_c(test_dir, '/', 'output.csv'), na.strings=c('', NA))
   print(str_c('test ', i))
   res <- checkEquals(output_fa, get(str_c('check_', i))) %>% print()
   error_f <- ifelse(!res, res, error_f)

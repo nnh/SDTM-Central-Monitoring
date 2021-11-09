@@ -87,6 +87,7 @@ row.names(temp) <- 1:nrow(temp)
 # Restore the columns to their original order.
 output_fa <- NULL
 output_colnames <- c(raw_colnames, kColnameVisit)
+temp <- rbind(data.frame(), lapply(temp[1:ncol(temp)], as.character))
 for (i in 1:length(output_colnames)){
   from_idx <- grep(x=colnames(temp), pattern=paste0('^', output_colnames[i], '$'), ignore.case=T)
   if (i != 1){
@@ -96,4 +97,4 @@ for (i in 1:length(output_colnames)){
     output_fa <- temp[from_idx]
   }
 }
-write.table(output_fa, paste0(kOutputDirpath, kOutputFileName), , row.names=F, append=F, sep=',')
+write.table(output_fa, paste0(kOutputDirpath, kOutputFileName), , row.names=F, append=F, sep=',', na='""')
