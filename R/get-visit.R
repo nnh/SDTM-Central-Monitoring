@@ -2,7 +2,7 @@
 #'
 #' @file get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.10.20
+#' @date 2021.11.9
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'FA.csv'
@@ -16,25 +16,37 @@ kColnameVisit <- 'visit'
 kVisitListVisitnumCol <- 1
 kVisitListVisitCol <- 2
 # ------ functions ------
+#' @title readCsvSetEncoding
+#' @description Reads a file with the specified encoding.
+#' @param target_file Full path of the target file.
+#' @param target_encoding Encoding to specify.
+#' @return Returns a data frame. If the file fails to read, NA is returned.
+readCsvSetEncoding <- function(target_file, target_encoding){
+  temp <- tryCatch(
+    read.csv(target_file, as.is=T, fileEncoding=target_encoding, stringsAsFactors=F, na.strings=""),
+    warning = function(e){ return(NA) }
+  )
+  return(temp)
+}
 #' @title ReadTargetCsv
-#' @param inputPath The path where the CSV file is located.
-#' @param targetFilename Name of the CSV file.
-#' @return a data frame.
-ReadTargetCsv <- function(inputPath, targetFilename){
+#' @param input_path The path where the CSV file is located.
+#' @param target_path The folder path where the target file resides.
+#' @param filename Target file name.
+#' @return Returns a data frame. If the file fails to read, NA is returned.
+ReadTargetCsv <- function(input_path, filename){
   # If the string of the specified file path ends with '\', remove the '\'.
-  temp_path <- ifelse(substr(inputPath, nchar(inputPath), nchar(inputPath)) == '/',
-                      substr(inputPath, 1, nchar(inputPath) - 1),
-                      inputPath)
-  # Returns NULL if the file fails to read.
-  res <- tryCatch(read.csv(paste0(temp_path, '/', targetFilename), header=T, as.is=T),
-                  error = function(e){
-                    return(NULL)
-                  },
-                  warning = function(e){
-                    return(NULL)
-                  },
-                  silent=F)
-  return(res)
+  temp_path <- ifelse(substr(input_path, nchar(input_path), nchar(input_path)) == '/',
+                      substr(input_path, 1, nchar(input_path) - 1),
+                      input_path)
+  target <- file.path(temp_path, filename)
+  temp <- readCsvSetEncoding(target, 'utf-8')
+  if (!is.data.frame(temp)){
+    temp <- readCsvSetEncoding(target, 'cp932')
+  }
+  if (!is.data.frame(temp)){
+    temp <- readCsvSetEncoding(target, 'UTF-8-BOM')
+  }
+  return(temp)
 }
 # ------ Init ------
 # If not specified, it will use the same path as 'kInputDirPath'.

@@ -30,7 +30,7 @@ if (!file.exists(test_dir)){
 }
 # 比較対象データフレーム
 id <- c(1, 2, 2, 4, 6, 7, 8, 9)
-visitnum <- c(100, 100, 110, 300, 400, NA, '', 1000)
+visitnum <- c(100, 100, 110, 300, 400, NA, '', 1000) %>% as.numeric()
 test_rawdata <- data.frame(id, visitnum)
 test_rawdata_filename <- 'FA.csv'
 test_rawdata %>% write.table(str_c(test_dir, '/', test_rawdata_filename), append=F, row.names=F, sep=',')
@@ -46,7 +46,7 @@ visit_table_num_base <- data.frame(visitnum_table_visitnum_num, visitnum_table_v
 # visitnumが文字列
 visit_table_str_base <- data.frame(as.character(visitnum_table_visitnum_num), visitnum_table_visit)
 # 結果確認用データフレームのベース
-checkdf_base <- input_fa[ , c('id', 'visitnum')]
+checkdf_base <- test_rawdata[ , c('id', 'visitnum')]
 checkdf_base$visit <- c('v100', 'v100', 'v110', 'v300', NA, NA, NA, 'v1000')
 # 'visitnum', 'visit'の２変数のみのファイル
 dataframe_count <- 1
@@ -85,6 +85,7 @@ dataframe_count <- data.frame(visitnum_table_visit, visitnum_table_filler_str_4,
 # run test
 filename <- 'visit.csv'
 error_f <- T
+# ### Data Frame Equivalence ###
 for (i in 1:(dataframe_count - 1)){
   get(str_c('v', '_', i)) %>% write.table(str_c(test_dir, '/', filename), row.names=F, append=F, sep=',')
   save_i <- i
@@ -93,6 +94,25 @@ for (i in 1:(dataframe_count - 1)){
   output_fa <- read.csv(str_c(test_dir, '/', 'output.csv'))
   print(str_c('test ', i))
   res <- checkEquals(output_fa, get(str_c('check_', i))) %>% print()
+  error_f <- ifelse(!res, res, error_f)
+}
+# ### file encoding ###
+test_fileencoding <- data.frame(c(1, 2, 3), c('あいう', 'abc', 'テスト'))
+colnames(test_fileencoding) <- c('test1', 'test2')
+fileencoding_list <- c('utf-8', 'cp932')
+for (i in 1:length(fileencoding_list)){
+  filename <- str_c('encode_', i, '.csv')
+  filepath <- str_c(test_dir, '/', filename)
+  test_fileencoding %>% write.table(filepath, row.names=F, append=F, sep=',', fileEncoding=fileencoding_list[i])
+  assign(str_c('encode_', i), ReadTargetCsv(test_dir, filename))
+}
+# utf-8-bom
+fileencoding_list <- c(fileencoding_list, 'utf-8-bom')
+i <- i + 1
+assign(str_c('encode_', i), ReadTargetCsv(test_dir, 'encode_bom.csv'))
+for (i in 1:length(fileencoding_list)){
+  print(fileencoding_list[i])
+  res <- checkEquals(test_fileencoding, get(str_c('encode_', i))) %>% print()
   error_f <- ifelse(!res, res, error_f)
 }
 if (error_f){
