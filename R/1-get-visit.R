@@ -5,11 +5,11 @@
 #' @date 2021.11.10
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
-kInputFileName <- 'FA.csv'
+kInputFileName <- 'dummyFA.csv'
 kExternalDirPath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kExternalFileName <- 'visit.csv'
+kExternalFileName <- 'dummyVISIT.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kOutputFileName <- 'output.csv'
+kOutputFileName <- 'getVisit.csv'
 # ------ constants ------
 kColnameVisitnum <- 'visitnum'
 kColnameVisit <- 'visit'

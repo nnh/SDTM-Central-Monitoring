@@ -2,12 +2,16 @@
 #'
 #' @file test.get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.9
+#' @date 2021.11.10
 rm(list=ls())
 # ------ libraries ------
 library(RUnit)
 library(tidyverse)
 library(here)
+# ------ constants ------
+kTestInputFileName <- 'dummyFA.csv'
+kTestVisitFileName <- 'dummyVISIT.csv'
+kTestTargetFileName <- 'getVisit.csv'
 # ------ functions ------
 #' @title SetDataframe
 #' @description Creates a data frame in the global environment from the information in the given arguments.
@@ -24,16 +28,17 @@ SetDataframe <- function(objectname_header, index, data, colname_list){
   return(index + 1)
 }
 # ------ init ------
+print('*** test.get-visit start ***')
 test_dir <- file.path(here('test', 'temp'))
 if (!file.exists(test_dir)){
   dir.create(test_dir)
 }
+# ------ main ------
 # 比較対象データフレーム
 id <- c(1, 2, 2, 4, 6, 7, 8, 9) %>% as.integer()
 visitnum <- c(100, 100, 110, 300, 400, NA, '', 1000) %>% as.integer()
 test_rawdata <- data.frame(id, visitnum)
-test_rawdata_filename <- 'FA.csv'
-test_rawdata %>% write.table(str_c(test_dir, '/', test_rawdata_filename), append=F, row.names=F, sep=',')
+test_rawdata %>% write.table(str_c(test_dir, '/', kTestInputFileName), append=F, row.names=F, sep=',')
 # visit table
 visitnum_table_visitnum_num <- c(100, 110, 200, 300, 1000, 1300)
 visitnum_table_visit <- c('v100', 'v110', 'v200', 'v300', 'v1000', 'v1300')
@@ -83,40 +88,21 @@ assign(str_c('check_', dataframe_count), checkdf_base)
 dataframe_count <- data.frame(visitnum_table_visit, visitnum_table_filler_str_4, visitnum_table_visitnum_num) %>%
   SetDataframe('v', dataframe_count, ., c('visit', 'test1', 'visitnum'))
 # run test
-filename <- 'visit.csv'
 error_f <- T
 # ### Data Frame Equivalence ###
 for (i in 1:(dataframe_count - 1)){
-  get(str_c('v', '_', i)) %>% write.table(str_c(test_dir, '/', filename), row.names=F, append=F, sep=',')
+  get(str_c('v', '_', i)) %>% write.table(str_c(test_dir, '/', kTestVisitFileName), row.names=F, append=F, sep=',')
   save_i <- i
   source(here('R', '1-get-visit.R'))
   i <- save_i
-  output_fa <- read.csv(str_c(test_dir, '/', 'output.csv'), na.strings=c('', NA))
+  output_fa <- read.csv(str_c(test_dir, '/', kTestTargetFileName), na.strings=c('', NA))
   print(str_c('test ', i))
   res <- checkEquals(output_fa, get(str_c('check_', i))) %>% print()
   error_f <- ifelse(!res, res, error_f)
 }
-# ### file encoding ###
-test_fileencoding <- data.frame(c(1, 2, 3), c('あいう', 'abc', 'テスト'))
-colnames(test_fileencoding) <- c('test1', 'test2')
-fileencoding_list <- c('utf-8', 'cp932')
-for (i in 1:length(fileencoding_list)){
-  filename <- str_c('encode_', i, '.csv')
-  filepath <- str_c(test_dir, '/', filename)
-  test_fileencoding %>% write.table(filepath, row.names=F, append=F, sep=',', fileEncoding=fileencoding_list[i])
-  assign(str_c('encode_', i), ReadTargetCsv(test_dir, filename))
-}
-# utf-8-bom
-fileencoding_list <- c(fileencoding_list, 'utf-8-bom')
-i <- i + 1
-assign(str_c('encode_', i), ReadTargetCsv(test_dir, 'encode_bom.csv'))
-for (i in 1:length(fileencoding_list)){
-  print(fileencoding_list[i])
-  res <- checkEquals(test_fileencoding, get(str_c('encode_', i))) %>% print()
-  error_f <- ifelse(!res, res, error_f)
-}
-if (error_f){
-  print('test_ok')
-} else {
-  print('test_ng')
-}
+# ### Read table by file encoding ###
+source(here('TEST', 'test.common.R'))
+error_f <- TestReadTable(error_f, here('R', '1-get-visit.R'), test_dir)
+# ### Overall Results ###
+PrintOverallResults(error_f)
+print('*** test.get-visit end ***')

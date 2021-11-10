@@ -1,16 +1,17 @@
 #' Extract the observations of Grade.
 #'
-#' @file extract-grade-observation.R
+#' @file 2-extract-grade-observation.R
 #' @author Mariko Ohtsuka
 #' @date 2021.11.10
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
-kInputFileName <- 'FA.csv'
+kInputFileName <- 'getVisit.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kOutputFileName <- 'output.csv'
-kGradeCriteria <- 'GRADE'
+kOutputFileName <- 'extract-grade-observation.csv'
 # ------ constants ------
-kOutputColnames <- c('USUBJID', 'FAOBJ', 'FAORRES', 'VISIT', 'VISITNUM')
+kCriteriaVariable <- 'FATESTCD'
+kGradeCriteria <- 'GRADE'
+kOutputColnames <- c('usubjid', 'faobj', 'faorres', 'visit', 'visitnum', kCriteriaVariable)
 # ------ functions ------
 #' @title readCsvSetEncoding
 #' @description Reads a file with the specified encoding.
@@ -69,5 +70,9 @@ input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
 if (is.null(input_fa)){
   stop('The input file was not found. Please check the path specification of the input file.')
 }
-output_df <- subset(input_fa, FATESTCD == kGradeCriteria, select=kOutputColnames)
+# Extraction of target column.
+input_colnames <- tolower(colnames(input_fa))
+target_df <- input_fa[ , input_colnames %in% tolower(kOutputColnames)]
+output_df <- subset(target_df, FATESTCD == kGradeCriteria)
+output_df <- output_df[ , colnames(output_df) != kCriteriaVariable]
 WriteOutputCsv(output_df, kOutputDirpath, kOutputFileName)
