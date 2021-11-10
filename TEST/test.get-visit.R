@@ -89,7 +89,7 @@ error_f <- T
 for (i in 1:(dataframe_count - 1)){
   get(str_c('v', '_', i)) %>% write.table(str_c(test_dir, '/', filename), row.names=F, append=F, sep=',')
   save_i <- i
-  source(here('R', 'get-visit.R'))
+  source(here('R', '1-get-visit.R'))
   i <- save_i
   output_fa <- read.csv(str_c(test_dir, '/', 'output.csv'), na.strings=c('', NA))
   print(str_c('test ', i))
