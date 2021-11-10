@@ -1,20 +1,16 @@
-#' Derive VISIT from VISITNUM.
+#' Extract the observations of Grade.
 #'
-#' @file get-visit.R
+#' @file extract-grade-observation.R
 #' @author Mariko Ohtsuka
 #' @date 2021.11.10
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'FA.csv'
-kExternalDirPath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kExternalFileName <- 'visit.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'output.csv'
+kGradeCriteria <- 'GRADE'
 # ------ constants ------
-kColnameVisitnum <- 'visitnum'
-kColnameVisit <- 'visit'
-kVisitListVisitnumCol <- 1
-kVisitListVisitCol <- 2
+kOutputColnames <- c('USUBJID', 'FAOBJ', 'FAORRES', 'VISIT', 'VISITNUM')
 # ------ functions ------
 #' @title readCsvSetEncoding
 #' @description Reads a file with the specified encoding.
@@ -67,51 +63,11 @@ WriteOutputCsv <- function(df, input_path, filename){
 }
 # ------ Init ------
 # If not specified, it will use the same path as 'kInputDirPath'.
-kExternalDirPath <- ifelse(kExternalDirPath != '', kExternalDirPath, kInputDirPath)
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 # Read csv.
 input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
-input_external_file <- ReadTargetCsv(kExternalDirPath, kExternalFileName)
-if (is.null(input_fa) | is.null(input_external_file)){
+if (is.null(input_fa)){
   stop('The input file was not found. Please check the path specification of the input file.')
 }
-# ------ Edit FA ------
-# Delete the column 'visit' if it exists.
-temp_col_idx <- grep(x=colnames(input_fa), pattern=paste0('^', kColnameVisit, '$'), ignore.case=T)
-if (length(temp_col_idx) > 0){
-  # Get the name of the 'visit' column.
-  raw_colnames_visit <- colnames(input_fa)[c(temp_col_idx)]
-  # Delete the 'visit' column.
-  input_fa[temp_col_idx] <- NULL
-}
-# ------ Get visit info ------
-# Extract only the columns named 'visitnum' and 'visit'.
-target_col_num_idx <- grep(x=colnames(input_external_file), pattern=paste0('^', kColnameVisitnum, '$'), ignore.case=T)
-target_col_idx <- grep(x=colnames(input_external_file), pattern=paste0('^', kColnameVisit, '$'), ignore.case=T)
-input_visitlist <- input_external_file[ , c(target_col_num_idx, target_col_idx)]
-# Remove duplicates and sort in ascending order by 'visitnum'.
-input_visitlist <- unique(input_visitlist)
-input_visitlist <- input_visitlist[order(input_visitlist[ , kVisitListVisitnumCol]), ]
-# ------ Merge dataframes ------
-raw_colnames <- colnames(input_fa)
-by_x_col_idx <- grep(x=raw_colnames, pattern=paste0('^', kColnameVisitnum, '$'), ignore.case=T)
-input_fa$save_order <- 1:nrow(input_fa)
-temp <- merge(input_fa, input_visitlist, by.x=by_x_col_idx, by.y=kVisitListVisitnumCol, all.x=T, sort=F)
-# Restore the rows to their original order.
-temp <- temp[order(temp$save_order), ]
-temp <- temp[ , colnames(temp) != 'save_order']
-row.names(temp) <- 1:nrow(temp)
-# Restore the columns to their original order.
-output_fa <- NULL
-output_colnames <- c(raw_colnames, kColnameVisit)
-temp <- rbind(data.frame(), lapply(temp[1:ncol(temp)], as.character))
-for (i in 1:length(output_colnames)){
-  from_idx <- grep(x=colnames(temp), pattern=paste0('^', output_colnames[i], '$'), ignore.case=T)
-  if (i != 1){
-    output_fa[i] <- temp[from_idx]
-
-  } else {
-    output_fa <- temp[from_idx]
-  }
-}
-WriteOutputCsv(output_fa, kOutputDirpath, kOutputFileName)
+output_df <- subset(input_fa, FATESTCD == kGradeCriteria, select=kOutputColnames)
+WriteOutputCsv(output_df, kOutputDirpath, kOutputFileName)
