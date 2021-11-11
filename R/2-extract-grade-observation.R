@@ -62,13 +62,13 @@ ReadTargetCsv <- function(input_path, filename){
 WriteOutputCsv <- function(df, input_path, filename){
   write.table(df, paste0(input_path, '/', filename), , row.names=F, append=F, sep=',', na='""')
 }
-# ------ Init ------
+# ------ Main ------
 # If not specified, it will use the same path as 'kInputDirPath'.
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 # Read csv.
 input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
-if (is.null(input_fa)){
-  stop('The input file was not found. Please check the path specification of the input file.')
+if (!is.data.frame(input_fa)){
+  stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
 # Extraction of target column.
 input_colnames <- tolower(colnames(input_fa))

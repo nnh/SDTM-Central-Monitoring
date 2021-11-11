@@ -5,9 +5,11 @@
 #' @date 2021.11.10
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
-kInputFileName <- 'dummyFA.csv'
+#kInputFileName <- 'dummyFA.csv'
+kInputFileName <- 'rawFA.csv'
 kExternalDirPath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kExternalFileName <- 'dummyVISIT.csv'
+#kExternalFileName <- 'dummyVISIT.csv'
+kExternalFileName <- 'rawFA.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'getVisit.csv'
 # ------ constants ------
@@ -72,8 +74,8 @@ kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 # Read csv.
 input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
 input_external_file <- ReadTargetCsv(kExternalDirPath, kExternalFileName)
-if (is.null(input_fa) | is.null(input_external_file)){
-  stop('The input file was not found. Please check the path specification of the input file.')
+if (!is.data.frame(input_fa) | !is.data.frame(input_external_file)){
+  stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
 # ------ Edit FA ------
 # Delete the column 'visit' if it exists.
@@ -114,4 +116,5 @@ for (i in 1:length(output_colnames)){
     output_fa <- temp[from_idx]
   }
 }
+# ------ Write csv ------
 WriteOutputCsv(output_fa, kOutputDirpath, kOutputFileName)
