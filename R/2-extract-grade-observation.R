@@ -53,6 +53,15 @@ ReadTargetCsv <- function(input_path, filename){
   }
   return(temp)
 }
+#' @title ConvertColumnNameIntoLowerCase
+#' @description Convert data frame column names to lowercase.
+#' @param input_df Data frame to be converted.
+#' @return List of converted data frames and column names before conversion.
+ConvertColumnNameIntoLowerCase <- function(input_df){
+  save_colnames <- colnames(input_df)
+  colnames(input_df) <- tolower(save_colnames)
+  return(list(input_df, save_colnames))
+}
 #' @title WriteOutputCsv
 #' @description Write csv.
 #' @param df The data frame for output.

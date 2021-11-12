@@ -2,15 +2,15 @@
 #'
 #' @file 3-summarize-by-grade.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.11
+#' @date 2021.11.12
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'extract-grade-observation.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'summarize-by-grade'
-kMinVisitnum <- 300
-kMaxVisitnum <- 1000
-kExcludeVisitnum <- c(400, 1000)
+kMinVisitnum <- NA
+kMaxVisitnum <- NA
+kExcludeVisitnum <- c(NA)
 kTargetGrade <- c(3, 4, 5)
 kPercentDigit <- 1
 kArmColname <- NA  # unused
@@ -56,6 +56,15 @@ ReadTargetCsv <- function(input_path, filename){
   }
   return(temp)
 }
+#' @title ConvertColumnNameIntoLowerCase
+#' @description Convert data frame column names to lowercase.
+#' @param input_df Data frame to be converted.
+#' @return List of converted data frames and column names before conversion.
+ConvertColumnNameIntoLowerCase <- function(input_df){
+  save_colnames <- colnames(input_df)
+  colnames(input_df) <- tolower(save_colnames)
+  return(list(input_df, save_colnames))
+}
 #' @title WriteOutputCsv
 #' @description Write csv.
 #' @param df The data frame for output.
@@ -67,24 +76,25 @@ WriteOutputCsv <- function(df, input_path, filename){
 }
 #' @title GetToxicityList
 #' @description Aggregate the values of FAOBJ.Sort FAORRES in descending order of frequency of occurrence.
-#' @param input_df A data source.
-#' @return data frame.
+#' @param input_df Data source.
+#' @return Data frame.
 GetToxicityList <- function(input_df){
-  toxicity <- unique(input_df$FAOBJ)
+  toxicity <- unique(input_df$faobj)
   toxicity_count <- sapply(toxicity, function(x){
-    targetToxicity <- subset(input_df, FAOBJ == x & FAORRES >= 3)
+    targetToxicity <- subset(input_df, faobj == x & faorres >= 3)
     return(nrow(targetToxicity))
   })
   df_toxicity <- data.frame(toxicity, toxicity_count)
   df_toxicity <- df_toxicity[order(df_toxicity$toxicity_count, decreasing=T, df_toxicity$toxicity), ]
   df_toxicity <- df_toxicity[ , 1, drop=F]
-  rownames(df_toxicity) <- 1:nrow(df_toxicity)
+  df_toxicity$toxicity_sortorder <- 1:nrow(df_toxicity)
+  rownames(df_toxicity) <- df_toxicity$toxicity_sortorder
   return(df_toxicity)
 }
 #' @title SetNameToList
 #' @description Create a named list.
 #' @param ... Variables to list.
-#' @return a list.
+#' @return List.
 SetNameToList <- function(...){
   return(setNames(list(...), eval(substitute(alist(...)))))
 }
@@ -95,12 +105,17 @@ SetNameToList <- function(...){
 #' @param summarize_conditions List of extraction conditions.
 #' @return List of aggregate results.
 CreateCountTableByGrade <- function(target_conditions, df, summarize_conditions){
-  target_df <- subset(df, VISITNUM == target_conditions[1] & FAOBJ == target_conditions[2])
+  output_colnames <- c('visitnum', 'visit', 'toxicity', 'grade', 'n', 'count', 'percent')
+  target_df <- subset(df, visitnum == as.numeric(target_conditions[1]) & faobj == target_conditions[2])
   digit <- summarize_conditions[['kPercentDigit']]
   n <- nrow(target_df)
-  count <- nrow(subset(target_df, FAORRES == target_conditions[3]))
-  percent <- round((count / n) * 100, digits=digit)
-  return(list(target_conditions[1], target_conditions[2], target_conditions[3], n, count, percent))
+  count <- nrow(subset(target_df, faorres == target_conditions[3]))
+  visit <- ifelse(n > 0, unique(target_df$visit), '')
+  percent <- ifelse(n > 0, round((count / n) * 100, digits=digit), 0)
+  res <- data.frame(as.numeric(target_conditions[1]), visit, target_conditions[2], as.numeric(target_conditions[3]),
+                    n, count, percent)
+  colnames(res) <- output_colnames
+  return(res)
 }
 #' @title SetEditVisitnumCondition
 #' @description If the input value is NA, it returns -1.
@@ -117,35 +132,50 @@ SetEditVisitnumCondition <- function(target_condition){
 #' @param target_conditions List of extraction conditions.
 #' @return a list of visitnum as a vector.
 GetTargetVisitnumList <- function(input_df, target_conditions){
-  conditions_name <- c('minVisitnum', 'maxVisitnum', 'excludeVisitnum')
-  for (i in 1:length(conditions_name)){
-    assign(conditions_name[i], SetEditVisitnumCondition(target_conditions[i]))
+  for (i in 1:length(target_conditions)){
+    assign(names(target_conditions[i]), SetEditVisitnumCondition(target_conditions[i]))
   }
   visit_table <- input_df
-  if (is.numeric(minVisitnum) & minVisitnum >= 0){
-    visit_table <- subset(visit_table, VISITNUM >= minVisitnum)
+  if (is.numeric(kMinVisitnum) & kMinVisitnum >= 0){
+    visit_table <- subset(visit_table, visitnum >= kMinVisitnum)
   }
-  if (is.numeric(maxVisitnum) & maxVisitnum >= 0){
-    visit_table <- subset(visit_table, VISITNUM <= maxVisitnum)
+  if (is.numeric(kMaxVisitnum) & kMaxVisitnum >= 0){
+    visit_table <- subset(visit_table, visitnum <= kMaxVisitnum)
   }
-  for (i in 1:length(excludeVisitnum)){
-    if (is.numeric(excludeVisitnum[i]) & excludeVisitnum[i] >= 0){
-      visit_table <- subset(visit_table, VISITNUM != excludeVisitnum[i])
+  for (i in 1:length(kExcludeVisitnum)){
+    if (is.numeric(kExcludeVisitnum[i]) & kExcludeVisitnum[i] >= 0){
+      visit_table <- subset(visit_table, visitnum != kExcludeVisitnum[i])
     }
   }
-  visit_table <- unique(visit_table$VISITNUM)
+  visit_table <- visit_table[ , c('visitnum', 'visit')]
+  visit_table <- unique(visit_table)
+  visit_table <- visit_table[order(visit_table$visitnum), ]
   return(visit_table)
 }
 # ------ Main ------
 # If not specified, it will use the same path as 'kInputDirPath'.
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 # Read csv.
-input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
+raw_input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
+input_fa <- ConvertColumnNameIntoLowerCase(raw_input_fa)[[1]]
 if (!is.data.frame(input_fa)){
   stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
 summarize_conditions <- c(SetNameToList(kTargetGrade, kArmColname, kPercentDigit))
 toxicity_table <- GetToxicityList(input_fa)
-visit_table <- GetTargetVisitnumList(input_fa, list(kMinVisitnum, kMaxVisitnum, kExcludeVisitnum))
-visit_toxicity_grade_table <- expand.grid(visit_table, toxicity_table[ , 1, drop=T], kTargetGrade)
+visit_table <- GetTargetVisitnumList(input_fa, SetNameToList(kMinVisitnum, kMaxVisitnum, kExcludeVisitnum))
+visit_toxicity_grade_table <- expand.grid(visit_table[ , 1, drop=T], toxicity_table[ , 1, drop=T], kTargetGrade)
 count_table <- apply(visit_toxicity_grade_table, 1, CreateCountTableByGrade, input_fa, summarize_conditions)
+# Convert a list to a data frame.
+df_summarize <- count_table[[1]]
+for (i in 2:length(count_table)){
+  df_summarize <- rbind(df_summarize, count_table[[i]])
+}
+# Edit table template.
+table_template <- expand.grid(visit_table$visitnum, toxicity_table$toxicity, kTargetGrade)
+colnames(table_template) <- c('visitnum', 'toxicity', 'grade')
+table_template <- merge(table_template, toxicity_table, by='toxicity', all.x=T)
+# Edit output data frame.
+df_output <- merge(table_template, df_summarize, by=c('visitnum', 'toxicity', 'grade'), all.x=T)
+# Sort by visitnum, toxicity, grade.
+df_output <- df_output[order(df_output$visitnum, df_output$toxicity_sortorder, df_output$grade), c('visit', 'toxicity', 'grade', 'n', 'count', 'percent')]

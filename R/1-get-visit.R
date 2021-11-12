@@ -2,7 +2,7 @@
 #'
 #' @file get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.10
+#' @date 2021.11.12
 # ------ settings ------
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 #kInputFileName <- 'dummyFA.csv'
@@ -57,6 +57,15 @@ ReadTargetCsv <- function(input_path, filename){
     temp <- readCsvSetEncoding(target, 'UTF-8-BOM')
   }
   return(temp)
+}
+#' @title ConvertColumnNameIntoLowerCase
+#' @description Convert data frame column names to lowercase.
+#' @param input_df Data frame to be converted.
+#' @return List of converted data frames and column names before conversion.
+ConvertColumnNameIntoLowerCase <- function(input_df){
+  save_colnames <- colnames(input_df)
+  colnames(input_df) <- tolower(save_colnames)
+  return(list(input_df, save_colnames))
 }
 #' @title WriteOutputCsv
 #' @description Write csv.
