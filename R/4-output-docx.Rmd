@@ -1,0 +1,117 @@
+---
+title: "Untitled"
+author: "author"
+date: "11/12/2021"
+output: word_document
+---
+```{r script_info, include=FALSE}
+#' Output an R markdown document.
+#'
+#' @file 4-output-docx.R
+#' @author Mariko Ohtsuka
+#' @date 2021.11.12
+```
+```{r setup, include=FALSE}
+kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
+kInputFileName <- 'summarize-by-grade.csv'
+kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
+kOutputFileName <- 'summarize-by-grade.csv'
+library(knitr)
+opts_chunk$set(echo = TRUE)
+```
+# header1
+## header2
+### header3
+test body
+```{r define_functions, include=FALSE}
+#' @title readCsvSetEncoding
+#' @description Reads a file with the specified encoding.
+#' @param target_file Full path of the target file.
+#' @param target_encoding Encoding to specify.
+#' @return Returns a data frame. If the file fails to read, NA is returned.
+readCsvSetEncoding <- function(target_file, target_encoding){
+  temp <- tryCatch(
+    read.csv(target_file, as.is=T, fileEncoding=target_encoding, stringsAsFactors=F, na.strings=""),
+    warning = function(e){ return(NA) }
+  )
+  return(temp)
+}
+#' @title RemoveLastBackslash
+#' @description If the string of the specified file path ends with '\', remove the '\'.
+#' @param input_path The path string.
+#' @return String of the path with trailing backslashes removed.
+RemoveLastBackslash <- function(input_path){
+  temp_path <- ifelse(substr(input_path, nchar(input_path), nchar(input_path)) == '/',
+                      substr(input_path, 1, nchar(input_path) - 1),
+                      input_path)
+  return(temp_path)
+}
+#' @title ReadTargetCsv
+#' @description Read csv.
+#' @param input_path The path where the CSV file is located.
+#' @param target_path The folder path where the target file resides.
+#' @param filename Target file name.
+#' @return Returns a data frame. If the file fails to read, NA is returned.
+ReadTargetCsv <- function(input_path, filename){
+  temp_path <- RemoveLastBackslash(input_path)
+  target <- file.path(temp_path, filename)
+  temp <- readCsvSetEncoding(target, 'utf-8')
+  if (!is.data.frame(temp)){
+    temp <- readCsvSetEncoding(target, 'cp932')
+  }
+  if (!is.data.frame(temp)){
+    temp <- readCsvSetEncoding(target, 'UTF-8-BOM')
+  }
+  return(temp)
+}
+#' @title ConvertColumnNameIntoLowerCase
+#' @description Convert data frame column names to lowercase.
+#' @param input_df Data frame to be converted.
+#' @return List of converted data frames and column names before conversion.
+ConvertColumnNameIntoLowerCase <- function(input_df){
+  save_colnames <- colnames(input_df)
+  colnames(input_df) <- tolower(save_colnames)
+  return(list(input_df, save_colnames))
+}
+#' @title editOutputTablebyToxicity
+#' @description Create a table for each toxicity.
+#' @param input_df Data frame of the table's data source.
+#' @param output_df Data frame for output.
+#' @param target_toxicity The name of toxicity.
+#' @param n Number of targeted visit.
+#' @return Data frame.
+editOutputTablebyToxicity <- function(input_df, output_df, target_toxicity, n){
+  df_by_toxicity <- subset(input_df, toxicity == target_toxicity)
+  output_row <- c(target_toxicity, n)
+  output_colnames_1 <- c('Toxicity', 'N')
+  for (i in 1:nrow(df_by_toxicity)){
+    output_row <- c(output_row, df_by_toxicity[i, 'count'], df_by_toxicity[i, 'percent'])
+    if (nrow(output_df) == 0){
+      output_colnames_1 <- c(output_colnames_1, paste0('Grade', df_by_toxicity[i, 'grade'], '(N)'), paste0('Grade', df_by_toxicity[i, 'grade'], '(%)'))
+    }
+  }
+  if (nrow(output_df) == 0){
+    res <- as.data.frame(t(data.frame(output_row)))
+    colnames(res) <- output_colnames_1
+  } else {
+    res <- rbind(output_df, output_row)
+  }
+  return(res)
+}
+```
+```{r init, include=FALSE}
+df <- ReadTargetCsv(kInputDirPath, kInputFileName)
+```
+```{r results="asis", echo=FALSE}
+target_visit_list <- unique(df$visit)
+for (i in 1:length(target_visit_list)){
+  target_visit <- subset(df, visit == target_visit_list[i])
+  n <- unique(target_visit$n)
+  output_df <- data.frame()
+  target_toxicity_list <- unique(target_visit$toxicity)
+  for (j in 1:length(target_toxicity_list)){
+    output_df <- editOutputTablebyToxicity(target_visit, output_df, target_toxicity_list[j], n)
+  }
+  print(kable(output_df, caption=paste0('Phase:', target_visit_list[i]), row.names=F))
+}
+```
