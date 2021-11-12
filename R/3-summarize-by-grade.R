@@ -8,9 +8,9 @@ kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/te
 kInputFileName <- 'extract-grade-observation.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'summarize-by-grade'
-kMinVisitnum <- NA
-kMaxVisitnum <- NA
-kExcludeVisitnum <- NA
+kMinVisitnum <- 300
+kMaxVisitnum <- 1000
+kExcludeVisitnum <- c(400, 1000)
 kTargetGrade <- c(3, 4, 5)
 kPercentDigit <- 1
 kArmColname <- NA  # unused
@@ -88,18 +88,53 @@ GetToxicityList <- function(input_df){
 SetNameToList <- function(...){
   return(setNames(list(...), eval(substitute(alist(...)))))
 }
-#' @title DivideDataFrameToList
-#' @description The data frames extracted according to the conditions are stored in a list and returned.
-#' @param input_df A data source.
-#' @param target_colname Column name of the extraction condition.
-#' @return List of extraction results and extraction condition strings.
-DivideDataFrameToList <- function(input_df, target_colname){
-  target_str <- unique(input_df[ , target_colname])
-  df_to_list <- lapply(target_str, function(x){
-    return(subset(input_df, input_df[ , target_colname] == x))
-  })
-  names(df_to_list) <- target_str
-  return(list(df_to_list, target_str))
+#' @title CreateCountTableByGrade
+#' @description Aggregate by condition.
+#' @param target_conditions Data frame of condition.
+#' @param df Data frame of the aggregation source.
+#' @param summarize_conditions List of extraction conditions.
+#' @return List of aggregate results.
+CreateCountTableByGrade <- function(target_conditions, df, summarize_conditions){
+  target_df <- subset(df, VISITNUM == target_conditions[1] & FAOBJ == target_conditions[2])
+  digit <- summarize_conditions[['kPercentDigit']]
+  n <- nrow(target_df)
+  count <- nrow(subset(target_df, FAORRES == target_conditions[3]))
+  percent <- round((count / n) * 100, digits=digit)
+  return(list(target_conditions[1], target_conditions[2], target_conditions[3], n, count, percent))
+}
+#' @title SetEditVisitnumCondition
+#' @description If the input value is NA, it returns -1.
+#' @param target_condition Variable to be checked.
+#' @return If the input value is NA, -1 is returned. Otherwise, it returns the input value.
+SetEditVisitnumCondition <- function(target_condition){
+  condition <- unlist(target_condition)
+  temp <- ifelse(!is.na(condition), condition, -1)
+  return(temp)
+}
+#' @title GetTargetVisitnumList
+#' @description
+#' @param input_df a data frame.
+#' @param target_conditions List of extraction conditions.
+#' @return a list of visitnum as a vector.
+GetTargetVisitnumList <- function(input_df, target_conditions){
+  conditions_name <- c('minVisitnum', 'maxVisitnum', 'excludeVisitnum')
+  for (i in 1:length(conditions_name)){
+    assign(conditions_name[i], SetEditVisitnumCondition(target_conditions[i]))
+  }
+  visit_table <- input_df
+  if (is.numeric(minVisitnum) & minVisitnum >= 0){
+    visit_table <- subset(visit_table, VISITNUM >= minVisitnum)
+  }
+  if (is.numeric(maxVisitnum) & maxVisitnum >= 0){
+    visit_table <- subset(visit_table, VISITNUM <= maxVisitnum)
+  }
+  for (i in 1:length(excludeVisitnum)){
+    if (is.numeric(excludeVisitnum[i]) & excludeVisitnum[i] >= 0){
+      visit_table <- subset(visit_table, VISITNUM != excludeVisitnum[i])
+    }
+  }
+  visit_table <- unique(visit_table$VISITNUM)
+  return(visit_table)
 }
 # ------ Main ------
 # If not specified, it will use the same path as 'kInputDirPath'.
@@ -109,35 +144,8 @@ input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
 if (!is.data.frame(input_fa)){
   stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
-df_toxicity <- GetToxicityList(input_fa)
-visitnumInfo <- SetNameToList(kMinVisitnum, kMaxVisitnum, kExcludeVisitnum)
-summarizeConditions <- c(visitnumInfo, SetNameToList(kTargetGrade), SetNameToList(kArmColname), SetNameToList(kPercentDigit))
-
-SummarizeByVisit <- function(input_df, summarizeConditions){
-  target_df <- input_df
-  list_by_visit <- DivideDataFrameToList(target_df, 'VISITNUM')
-  list_df_by_visit <- list_by_visit[[1]]
-  a <- lapply(list_df_by_visit, SummarizeByToxicity, summarizeConditions)
-  return(a)
-}
-SummarizeByToxicity <- function(input_df, summarizeConditions){
-  target_df <- input_df
-  list_by_toxycity <- DivideDataFrameToList(target_df, 'FAOBJ')
-  list_df_by_toxycity <- list_by_toxycity[[1]]
-  df_by_toxicity <- lapply(list_df_by_toxycity, CountToxicityByGrade, summarizeConditions)
-  print(df_by_toxicity)
-  return(df_by_toxicity)
-}
-CountToxicityByGrade <- function(input_df, summarizeConditions){
-  target_df <- input_df
-  n <- nrow(target_df)
-  count_per_by_grade <- lapply(summarizeConditions[['kTargetGrade']], CountByGrade, target_df, summarizeConditions, n)
-  return(c(unique(target_df$FAOBJ), n, count_per_by_grade))
-}
-CountByGrade <- function(grade_value, input_df, summarizeConditions, n){
-  digit <- summarizeConditions[['kPercentDigit']]
-  count <- nrow(subset(input_df, input_df$FAORRES == grade_value))
-  percent <- round((count / n) * 100, digits=digit)
-  return(c(count, percent))
-}
-a <- SummarizeByVisit(input_fa, summarizeConditions)
+summarize_conditions <- c(SetNameToList(kTargetGrade, kArmColname, kPercentDigit))
+toxicity_table <- GetToxicityList(input_fa)
+visit_table <- GetTargetVisitnumList(input_fa, list(kMinVisitnum, kMaxVisitnum, kExcludeVisitnum))
+visit_toxicity_grade_table <- expand.grid(visit_table, toxicity_table[ , 1, drop=T], kTargetGrade)
+count_table <- apply(visit_toxicity_grade_table, 1, CreateCountTableByGrade, input_fa, summarize_conditions)
