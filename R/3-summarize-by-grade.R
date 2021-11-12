@@ -7,7 +7,7 @@
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'extract-grade-observation.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kOutputFileName <- 'summarize-by-grade'
+kOutputFileName <- 'summarize-by-grade.csv'
 kMinVisitnum <- NA
 kMaxVisitnum <- NA
 kExcludeVisitnum <- c(NA)
@@ -110,9 +110,8 @@ CreateCountTableByGrade <- function(target_conditions, df, summarize_conditions)
   digit <- summarize_conditions[['kPercentDigit']]
   n <- nrow(target_df)
   count <- nrow(subset(target_df, faorres == target_conditions[3]))
-  visit <- ifelse(n > 0, unique(target_df$visit), '')
   percent <- ifelse(n > 0, round((count / n) * 100, digits=digit), 0)
-  res <- data.frame(as.numeric(target_conditions[1]), visit, target_conditions[2], as.numeric(target_conditions[3]),
+  res <- data.frame(as.numeric(target_conditions[1]), target_conditions[4], target_conditions[2], as.numeric(target_conditions[3]),
                     n, count, percent)
   colnames(res) <- output_colnames
   return(res)
@@ -164,7 +163,10 @@ if (!is.data.frame(input_fa)){
 summarize_conditions <- c(SetNameToList(kTargetGrade, kArmColname, kPercentDigit))
 toxicity_table <- GetToxicityList(input_fa)
 visit_table <- GetTargetVisitnumList(input_fa, SetNameToList(kMinVisitnum, kMaxVisitnum, kExcludeVisitnum))
-visit_toxicity_grade_table <- expand.grid(visit_table[ , 1, drop=T], toxicity_table[ , 1, drop=T], kTargetGrade)
+visit_toxicity_grade_table <- expand.grid(visitnum=visit_table[ , 1, drop=T], toxicity=toxicity_table[ , 1, drop=T], grade=kTargetGrade)
+# Merge visit
+visit_toxicity_grade_table <- merge(visit_toxicity_grade_table, visit_table, by='visitnum', all.x=T)
+visit_toxicity_grade_table <- visit_toxicity_grade_table[ , c('visitnum', 'toxicity', 'grade', 'visit')]
 count_table <- apply(visit_toxicity_grade_table, 1, CreateCountTableByGrade, input_fa, summarize_conditions)
 # Convert a list to a data frame.
 df_summarize <- count_table[[1]]
@@ -179,3 +181,4 @@ table_template <- merge(table_template, toxicity_table, by='toxicity', all.x=T)
 df_output <- merge(table_template, df_summarize, by=c('visitnum', 'toxicity', 'grade'), all.x=T)
 # Sort by visitnum, toxicity, grade.
 df_output <- df_output[order(df_output$visitnum, df_output$toxicity_sortorder, df_output$grade), c('visit', 'toxicity', 'grade', 'n', 'count', 'percent')]
+WriteOutputCsv(df_output, kOutputDirpath, kOutputFileName)
