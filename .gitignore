@@ -39,3 +39,4 @@ vignettes/*.pdf
 .Renviron
 
 !/TEST/temp/encode_bom.csv
+*.docx
