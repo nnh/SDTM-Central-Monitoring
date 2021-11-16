@@ -13,9 +13,8 @@ kTestInputFileName <- 'dummyFA.csv'
 kTestVisitFileName <- 'dummyVISIT.csv'
 kTestTargetFileName <- 'getVisit.csv'
 # ------ functions ------
-CreateVisitTableForTest <- function(index, res_string, df_visit, check_colnames){
+CreateVisitTableForTest <- function(index, res_string, df_visit){
   assign(str_c('test_', index), res_string, envir=.GlobalEnv)
-  assign(str_c('check_colnames_', index), check_colnames, envir=.GlobalEnv)
   assign(str_c('visit_', index), df_visit, envir=.GlobalEnv)
 }
 # ------ init ------
@@ -35,37 +34,37 @@ colnames(visit_base) <- c('visitnum', 'visit')
 checkdf <- data.frame(test_rawdata$id,
                       test_rawdata$visitnum,
                       c('v100', 'v100', 'v110', 'v300', NA, NA, NA, 'v1000'))
-colnames(checkdf) <- c('id', 'visitnum', 'visit')
+colnames(checkdf) <- c('id', 'visitnum', 'VISIT')
 test_table <- list(
-  list("visit tableが'visitnum', 'visit'の２変数、visitnumが数値", visit_base, c('id', 'visitnum', 'visit')),
+  list("visit tableが'visitnum', 'visit'の２変数、visitnumが数値", visit_base),
   list("visit tableが'visitnum', 'visit'の２変数、visitnumが文字列",
-       data.frame(visitnum=as.character(visit_base$visitnum), visit=visit_base$visit), c('id', 'visitnum', 'visit')),
+       data.frame(visitnum=as.character(visit_base$visitnum), visit=visit_base$visit)),
   list("visit tableが'Visitnum', 'Visit'の２変数",
-       data.frame(Visitnum=visit_base$visitnum, Visit=visit_base$visit), c('id', 'visitnum', 'Visit')),
+       data.frame(Visitnum=visit_base$visitnum, Visit=visit_base$visit)),
   list("visit tableが'VISITNUM', 'VISIT'の２変数",
-       data.frame(VISITNUM=visit_base$visitnum, VISIT=visit_base$visit), c('id', 'visitnum', 'VISIT')),
+       data.frame(VISITNUM=visit_base$visitnum, VISIT=visit_base$visit)),
   list("visit tableが'test1', 'test2', 'visitnum', 'visit'の４変数",
        data.frame(test1=runif(nrow(visit_base), min=1, max=999),
                   test2=runif(nrow(visit_base), min=1, max=999),
                   visitnum=visit_base$visitnum,
-                  visit=visit_base$visit), c('id', 'visitnum', 'visit')),
+                  visit=visit_base$visit)),
   list("visit tableが'Visitnum', 'test1', 'test2', 'Visit'の４変数",
        data.frame(Visitnum=visit_base$visitnum,
                   test1=stringi::stri_rand_strings(nrow(visit_base), length=6),
                   test2=runif(nrow(visit_base), min=1, max=999),
-                  Visit=visit_base$visit), c('id', 'visitnum', 'Visit')),
+                  Visit=visit_base$visit)),
   list("visit tableが'VISITNUM', 'VISIT', 'test1', 'test2'の４変数",
        data.frame(VISITNUM=visit_base$visitnum,
                   VISIT=visit_base$visit,
                   test1=stringi::stri_rand_strings(nrow(visit_base), length=6),
-                  test2=runif(nrow(visit_base), min=1, max=999)), c('id', 'visitnum', 'VISIT')),
+                  test2=runif(nrow(visit_base), min=1, max=999))),
   list("visit tableが'visit', 'test1', 'visitnum'の３変数",
        data.frame(visit=visit_base$visit,
                   test1=stringi::stri_rand_strings(nrow(visit_base), length=6),
-                  visitnum=visit_base$visitnum), c('id', 'visitnum', 'visit'))
+                  visitnum=visit_base$visitnum))
 )
 for (i in 1:length(test_table)){
-  CreateVisitTableForTest(i, test_table[[i]][[1]], test_table[[i]][[2]], test_table[[i]][[3]])
+  CreateVisitTableForTest(i, test_table[[i]][[1]], test_table[[i]][[2]])
 }
 # run test
 error_f <- T
@@ -79,7 +78,6 @@ for (i in 1:length(test_table)){
   i <- save_i
   print(str_c('test ', i))
   compare_df <- checkdf
-  colnames(compare_df) <- get(str_c('check_colnames_', i))
   res <- checkEquals(output_fa, compare_df) %>% print()
   error_f <- ifelse(!res, res, error_f)
 }

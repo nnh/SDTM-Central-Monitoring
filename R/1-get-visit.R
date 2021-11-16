@@ -2,21 +2,18 @@
 #'
 #' @file get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.12
+#' @date 2021.11.16
 # ------ settings ------
-kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
-#kInputFileName <- 'dummyFA.csv'
+kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'rawFA.csv'
 kExternalDirPath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-#kExternalFileName <- 'dummyVISIT.csv'
 kExternalFileName <- 'rawFA.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'getVisit.csv'
 # ------ constants ------
-kColnameVisitnum <- 'visitnum'
-kColnameVisit <- 'visit'
+kColnameVisitnum <- 'VISITNUM'
+kColnameVisit <- 'VISIT'
 kVisitListVisitnumCol <- 1
-kVisitListVisitCol <- 2
 # ------ functions ------
 #' @title readCsvSetEncoding
 #' @description Reads a file with the specified encoding.
@@ -58,15 +55,6 @@ ReadTargetCsv <- function(input_path, filename){
   }
   return(temp)
 }
-#' @title ConvertColumnNameIntoLowerCase
-#' @description Convert data frame column names to lowercase.
-#' @param input_df Data frame to be converted.
-#' @return List of converted data frames and column names before conversion.
-ConvertColumnNameIntoLowerCase <- function(input_df){
-  save_colnames <- colnames(input_df)
-  colnames(input_df) <- tolower(save_colnames)
-  return(list(input_df, save_colnames))
-}
 #' @title WriteOutputCsv
 #' @description Write csv.
 #' @param df The data frame for output.
@@ -94,9 +82,6 @@ if (!is.data.frame(input_fa) | !is.data.frame(input_external_file)){
 # Delete the column 'visit' if it exists.
 temp_col_idx <- grep(x=colnames(input_fa), pattern=paste0('^', kColnameVisit, '$'), ignore.case=T)
 if (length(temp_col_idx) > 0){
-  # Get the name of the 'visit' column.
-  raw_colnames_visit <- colnames(input_fa)[c(temp_col_idx)]
-  # Delete the 'visit' column.
   input_fa[temp_col_idx] <- NULL
 }
 # ------ Get visit info ------
@@ -104,6 +89,7 @@ if (length(temp_col_idx) > 0){
 target_col_num_idx <- grep(x=colnames(input_external_file), pattern=paste0('^', kColnameVisitnum, '$'), ignore.case=T)
 target_col_idx <- grep(x=colnames(input_external_file), pattern=paste0('^', kColnameVisit, '$'), ignore.case=T)
 input_visitlist <- input_external_file[ , c(target_col_num_idx, target_col_idx)]
+colnames(input_visitlist) <- c(kColnameVisitnum, kColnameVisit)
 # Remove duplicates and sort in ascending order by 'visitnum'.
 input_visitlist <- unique(input_visitlist)
 input_visitlist <- input_visitlist[order(input_visitlist[ , kVisitListVisitnumCol]), ]
