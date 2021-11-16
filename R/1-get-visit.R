@@ -25,7 +25,7 @@ kVisitListVisitCol <- 2
 #' @return Returns a data frame. If the file fails to read, NA is returned.
 readCsvSetEncoding <- function(target_file, target_encoding){
   temp <- tryCatch(
-    read.csv(target_file, as.is=T, fileEncoding=target_encoding, stringsAsFactors=F, na.strings=""),
+    read.csv(target_file, as.is=T, fileEncoding=target_encoding, stringsAsFactors=F, na.strings=c("", NA)),
     warning = function(e){ return(NA) }
   )
   return(temp)
@@ -77,6 +77,10 @@ WriteOutputCsv <- function(df, input_path, filename){
   write.table(df, paste0(input_path, '/', filename), , row.names=F, append=F, sep=',', na='""')
 }
 # ------ Init ------
+# For test
+if (exists('exec_test')){
+  SetSettingsForTest(exec_test)
+}
 # If not specified, it will use the same path as 'kInputDirPath'.
 kExternalDirPath <- ifelse(kExternalDirPath != '', kExternalDirPath, kInputDirPath)
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)

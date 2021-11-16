@@ -2,7 +2,7 @@
 #'
 #' @file test.common.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.10
+#' @date 2021.11.15
 # ------ libraries ------
 library(RUnit)
 library(tidyverse)
@@ -47,4 +47,27 @@ PrintOverallResults <- function(error_f){
   } else {
     print('test_ng')
   }
+}
+#' @title SetSettingsForTest
+#' @description Overwrite variables.
+#' @param ... Variable name and variable contents to be overwritten.
+#' @return none
+#' @example SetSettingsForTest(c(kInputFileName='dummyFA.csv', kExternalFileName='dummyVISIT.csv'))
+SetSettingsForTest <- function(...){
+  list(...) %>% map(~{
+    for (i in 1:length(.)){
+      assign(names(.[i]), .[i], envir=.GlobalEnv)
+    }
+  })
+}
+#' @title CreateTestFolder
+#'
+#' @param target_path String of full path of the target folder.
+#' @return String of full path of the target folder.
+CreateTestFolder <- function(target_path){
+  test_dir <- file.path(target_path)
+  if (!file.exists(test_dir)){
+    dir.create(test_dir)
+  }
+  return(test_dir)
 }

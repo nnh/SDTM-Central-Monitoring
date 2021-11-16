@@ -15,7 +15,7 @@ output: word_document
 kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'summarize-by-grade.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kOutputFileName <- 'summarize-by-grade.csv'
+kOutputFileName <- 'test.docx'
 library(knitr)
 opts_chunk$set(echo = TRUE)
 ```
@@ -100,6 +100,8 @@ editOutputTablebyToxicity <- function(input_df, output_df, target_toxicity, n){
 }
 ```
 ```{r init, include=FALSE}
+# If not specified, it will use the same path as 'kInputDirPath'.
+kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 df <- ReadTargetCsv(kInputDirPath, kInputFileName)
 ```
 ```{r results="asis", echo=FALSE}
@@ -112,6 +114,6 @@ for (i in 1:length(target_visit_list)){
   for (j in 1:length(target_toxicity_list)){
     output_df <- editOutputTablebyToxicity(target_visit, output_df, target_toxicity_list[j], n)
   }
-  print(kable(output_df, caption=paste0('Phase:', target_visit_list[i]), row.names=F))
+  print(kable(output_df, output=paste0(kOutputDirpath, '/', kOutputFileName), caption=paste0('Phase:', target_visit_list[i]), row.names=F))
 }
 ```
