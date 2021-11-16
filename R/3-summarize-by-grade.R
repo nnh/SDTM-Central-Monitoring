@@ -4,7 +4,7 @@
 #' @author Mariko Ohtsuka
 #' @date 2021.11.16
 # ------ settings ------
-kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
+kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'extract-grade-observation.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'summarize-by-grade.csv'
@@ -95,14 +95,29 @@ SetNameToList <- function(...){
 #' @param summarize_conditions List of extraction conditions.
 #' @return List of aggregate results.
 CreateCountTableByGrade <- function(target_conditions, df, summarize_conditions){
-  output_colnames <- c('VISITNUM', 'VISIT', 'AETERM', 'GRADE', 'N', 'COUNT', 'PERCENT')
-  target_df <- subset(df, VISITNUM == as.numeric(target_conditions[1]) & FAOBJ == target_conditions[2])
+  idx_visitnum <- 1
+  idx_aeterm <- 2
+  idx_grade <- 3
+  idx_visit <- 4
+  target_df <- subset(df, VISITNUM == as.numeric(target_conditions[idx_visitnum]) & FAOBJ == target_conditions[idx_aeterm])
   digit <- summarize_conditions[['kPercentDigit']]
   n <- nrow(target_df)
-  count <- nrow(subset(target_df, FAORRES == target_conditions[3]))
+  if (length(grep('-', target_conditions[idx_grade])) > 0){
+    # total
+    split_grade <- strsplit(target_conditions[idx_grade], '-')
+    min_grade <- as.numeric(split_grade[[1]][1])
+    # Only the worst grade counts.
+    temp <- subset(target_df, FAORRES >= min_grade, c(USUBJID, VISITNUM, FAOBJ))
+    temp <- unique(temp)
+    count <- nrow(temp)
+  } else {
+    # by grade
+    count <- nrow(subset(target_df, FAORRES == target_conditions[idx_grade]))
+  }
   percent <- ifelse(n > 0, round((count / n) * 100, digits=digit), 0)
-  res <- data.frame(as.numeric(target_conditions[1]), target_conditions[4], target_conditions[2], as.numeric(target_conditions[3]),
-                    n, count, percent)
+  res <- data.frame(as.numeric(target_conditions[idx_visitnum]), target_conditions[idx_visit], target_conditions[idx_aeterm],
+                    target_conditions[idx_grade], n, count, percent)
+  output_colnames <- c('VISITNUM', 'VISIT', 'AETERM', 'GRADE', 'N', 'COUNT', 'PERCENT')
   colnames(res) <- output_colnames
   return(res)
 }
@@ -141,6 +156,15 @@ GetTargetVisitnumList <- function(input_df, target_conditions){
   visit_table <- visit_table[order(visit_table$VISITNUM), ]
   return(visit_table)
 }
+#' @title GetGradeList
+#'
+#' @param targetGrade Vector of target grades.
+#' @return A vector.
+GetGradeList <- function(targetGrade){
+  sortorder_max <- length(targetGrade) + 1
+  res <- data.frame(GRADE=c(targetGrade, paste0(min(targetGrade), '-', max(targetGrade))), GRADE_SORTORDER=1:sortorder_max)
+  return(res)
+}
 # ------ Main ------
 # If not specified, it will use the same path as 'kInputDirPath'.
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
@@ -150,13 +174,14 @@ if (!is.data.frame(input_fa)){
   stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
 colnames(input_fa) <- toupper(colnames(input_fa))
-summarize_conditions <- c(SetNameToList(kTargetGrade, kArmColname, kPercentDigit))
+summarize_conditions <- c(SetNameToList(kArmColname, kPercentDigit))
 toxicity_table <- GetToxicityList(input_fa)
+grade_table <- GetGradeList(kTargetGrade)
 visit_table <- GetTargetVisitnumList(input_fa, SetNameToList(kMinVisitnum, kMaxVisitnum, kExcludeVisitnum))
-visit_toxicity_grade_table <- expand.grid(VISITNUM=visit_table[ , 1, drop=T], AETERM=toxicity_table[ , 1, drop=T], GRADE=kTargetGrade)
+visit_toxicity_grade_table <- expand.grid(VISITNUM=visit_table[ , 1, drop=T], AETERM=toxicity_table[ , 1, drop=T],
+                                          GRADE=grade_table[ , 1, drop=T])
 # Merge visit
 visit_toxicity_grade_table <- merge(visit_toxicity_grade_table, visit_table, by='VISITNUM', all.x=T)
-visit_toxicity_grade_table <- visit_toxicity_grade_table[ , c('VISITNUM', 'AETERM', 'GRADE', 'VISIT')]
 count_table <- apply(visit_toxicity_grade_table, 1, CreateCountTableByGrade, input_fa, summarize_conditions)
 # Convert a list to a data frame.
 df_summarize <- count_table[[1]]
@@ -164,10 +189,19 @@ for (i in 2:length(count_table)){
   df_summarize <- rbind(df_summarize, count_table[[i]])
 }
 # Edit table template.
-table_template <- expand.grid(VISITNUM=visit_table$VISITNUM, AETERM=toxicity_table$AETERM, GRADE=kTargetGrade)
+table_template <- expand.grid(VISITNUM=visit_table$VISITNUM, AETERM=toxicity_table$AETERM, GRADE=grade_table$GRADE)
 table_template <- merge(table_template, toxicity_table, by='AETERM', all.x=T)
+table_template <- merge(table_template, grade_table, by='GRADE', all.x=T)
 # Edit output data frame.
 df_output <- merge(table_template, df_summarize, by=c('VISITNUM', 'AETERM', 'GRADE'), all.x=T)
 # Sort by visitnum, toxicity, grade.
-df_output <- df_output[order(df_output$VISITNUM, df_output$TOXICITY_SORTORDER, df_output$GRADE), c('VISITNUM', 'VISIT', 'AETERM', 'GRADE', 'N', 'COUNT', 'PERCENT')]
+df_output <- df_output[order(df_output$VISITNUM, df_output$TOXICITY_SORTORDER, df_output$GRADE_SORTORDER), c('VISITNUM', 'VISIT', 'AETERM', 'GRADE', 'N', 'COUNT', 'PERCENT')]
+# If N is zero, replace count with a hyphen.
+for (i in 1:nrow(df_output)){
+  if (df_output[i, 'N'] == 0){
+    df_output[i, 'N'] <- '-'
+    df_output[i, 'COUNT'] <- '-'
+    df_output[i, 'PERCENT'] <- '-'
+  }
+}
 WriteOutputCsv(df_output, kOutputDirpath, kOutputFileName)

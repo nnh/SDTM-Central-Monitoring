@@ -9,10 +9,10 @@ output: word_document
 #'
 #' @file 4-output-docx.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.12
+#' @date 2021.11.16
 ```
 ```{r setup, include=FALSE}
-kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
+kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'summarize-by-grade.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'test.docx'
@@ -81,13 +81,13 @@ ConvertColumnNameIntoLowerCase <- function(input_df){
 #' @param n Number of targeted visit.
 #' @return Data frame.
 editOutputTablebyToxicity <- function(input_df, output_df, target_toxicity, n){
-  df_by_toxicity <- subset(input_df, toxicity == target_toxicity)
+  df_by_toxicity <- subset(input_df, AETERM == target_toxicity)
   output_row <- c(target_toxicity, n)
-  output_colnames_1 <- c('Toxicity', 'N')
+  output_colnames_1 <- c('Reported Term for the AE', 'N')
   for (i in 1:nrow(df_by_toxicity)){
-    output_row <- c(output_row, df_by_toxicity[i, 'count'], df_by_toxicity[i, 'percent'])
+    output_row <- c(output_row, paste0(df_by_toxicity[i, 'COUNT'], '(', df_by_toxicity[i, 'PERCENT'], ')'))
     if (nrow(output_df) == 0){
-      output_colnames_1 <- c(output_colnames_1, paste0('Grade', df_by_toxicity[i, 'grade'], '(n)'), paste0('Grade', df_by_toxicity[i, 'grade'], '(%)'))
+      output_colnames_1 <- c(output_colnames_1, paste0('GRADE', df_by_toxicity[i, 'GRADE'], '(n(%))'))
     }
   }
   if (nrow(output_df) == 0){
@@ -105,12 +105,12 @@ kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 df <- ReadTargetCsv(kInputDirPath, kInputFileName)
 ```
 ```{r results="asis", echo=FALSE}
-target_visit_list <- unique(df$visit)
+target_visit_list <- unique(df$VISIT)
 for (i in 1:length(target_visit_list)){
-  target_visit <- subset(df, visit == target_visit_list[i])
-  n <- unique(target_visit$n)
+  target_visit <- subset(df, VISIT == target_visit_list[i])
+  n <- unique(subset(target_visit, N != '-', c('N')))[ , 1, drop=T]
   output_df <- data.frame()
-  target_toxicity_list <- unique(target_visit$toxicity)
+  target_toxicity_list <- unique(target_visit$AETERM)
   for (j in 1:length(target_toxicity_list)){
     output_df <- editOutputTablebyToxicity(target_visit, output_df, target_toxicity_list[j], n)
   }
