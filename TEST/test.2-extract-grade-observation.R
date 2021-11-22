@@ -2,7 +2,7 @@
 #'
 #' @file test.extract-grade-observation.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.16
+#' @date 2021.11.22
 rm(list=ls())
 # ------ libraries ------
 library(RUnit)
@@ -15,7 +15,7 @@ kTestInputFileName <- 'getVisit.csv'
 kTestTargetFileName <- 'extract-grade-observation.csv'
 # ------ init ------
 print('*** test.extract-grade-observation start ***')
-source(here('TEST', 'test.common.R'))
+source(here('TEST', 'test.common.R'), encoding="utf-8")
 test_dir = CreateTestFolder(here('test', 'temp'))
 # ------ main ------
 # edit input data
@@ -28,11 +28,11 @@ visit <- c('v100', 'v200', 'v300', 'v400', 'v500', 'v600')
 test_rawdata <- data.frame(usubjid, faobj, faorres, visitnum, fatestcd) %>% write.table(str_c(test_dir, '/', kTestRawdataFileName), append=F, row.names=F, sep=',')
 test_visit <- data.frame(visitnum, visit) %>% write.table(str_c(test_dir, '/', kTestVisitFileName), append=F, row.names=F, sep=',')
 exec_test <- c(kInputFileName=kTestRawdataFileName, kExternalFileName=kTestVisitFileName)
-source(here('R', '1-get-visit.R'))
+source(here('R', '1-get-visit.R'), encoding="utf-8")
 # run test
 error_f <- T
 # ### normal process ###
-source(here('R', '2-extract-grade-observation.R'))
+source(here('R', '2-extract-grade-observation.R'), encoding="utf-8")
 test_comp <- data.frame(c('U-1', 'U-1', 'U-3', 'U-4'), c('TEST1', 'TEST2', NA, NA), c(3, NA, 5, 4), c(100, 200, 400, 500), c('v100', 'v200', 'v400', 'v500'))
 colnames(test_comp) <- c('USUBJID', 'FAOBJ', 'FAORRES', 'VISITNUM', 'VISIT')
 test_input <- ReadTargetCsv(test_dir, kTestTargetFileName)

@@ -15,7 +15,7 @@ library(here)
 #' @param test_dir Path of the test directory.
 #' @return Boolean value, TRUE or FALSE.
 TestReadTable <- function(input_error_f, script_path, test_dir){
-  source(script_path)
+  source(script_path, encoding="utf-8")
   error_f <- input_error_f
   test_fileencoding <- data.frame(c(1, 2, 3), c('あいう', 'abc', 'テスト'))
   colnames(test_fileencoding) <- c('test1', 'test2')

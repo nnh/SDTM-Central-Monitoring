@@ -23,16 +23,16 @@ GetWorstGrade <- function(input_df){
 }
 # ------ init ------
 print('*** test.summarize-by-grade start ***')
-source(here('TEST', 'test.common.R'))
+source(here('TEST', 'test.common.R'), encoding="utf-8")
 test_dir = CreateTestFolder(here('test', 'temp'))
 # ------ main ------
 # run test
 error_f <- T
 # ### Test using anonymized rawdata ###
 print('### Create a dummy file for testing. ###')
-# source(here('TEST', 'test.inputfile-edit.R'))
+# source(here('TEST', 'test.inputfile-edit.R'), encoding="utf-8")
 exec_test <- c(kInputFileName='dummy_extract-grade-observation.csv', dummy='')
-source(here('R', '3-summarize-by-grade.R'))
+source(here('R', '3-summarize-by-grade.R'), encoding="utf-8")
 rm(exec_test)
 test_input <- ReadTargetCsv(test_dir, kTestTargetFileName)
 compare_input <- ReadTargetCsv(test_dir, 'compare_summarize-by-grade.csv')
@@ -48,7 +48,7 @@ df <- data.frame(USUBJID, FAOBJ, FAORRES, VISITNUM, VISIT)
 compare_worstgrade <- df %>% GetWorstGrade()
 df %>% write.table(here(test_dir, 'test2_extract-grade-observation.csv'), row.names=F, append=F, sep=',')
 exec_test <- c(kInputFileName='test2_extract-grade-observation.csv', dummy='')
-source(here('R', '3-summarize-by-grade.R'))
+source(here('R', '3-summarize-by-grade.R'), encoding="utf-8")
 rm(exec_test)
 test_input <- ReadTargetCsv(test_dir, kTestTargetFileName)
 VISITNUM <- c(rep(100, 8), rep(101, 8))

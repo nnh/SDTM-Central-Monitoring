@@ -2,7 +2,7 @@
 #'
 #' @file test.get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.16
+#' @date 2021.11.22
 rm(list=ls())
 # ------ libraries ------
 library(RUnit)
@@ -19,7 +19,7 @@ CreateVisitTableForTest <- function(index, res_string, df_visit){
 }
 # ------ init ------
 print('*** test.get-visit start ***')
-source(here('TEST', 'test.common.R'))
+source(here('TEST', 'test.common.R'), encoding="utf-8")
 test_dir = CreateTestFolder(here('test', 'temp'))
 # ------ Create a data frame for comparison. ------
 id <- c(1, 2, 2, 4, 6, 7, 8, 9) %>% as.integer()
@@ -73,7 +73,7 @@ for (i in 1:length(test_table)){
   get(str_c('visit', '_', i)) %>% write.table(str_c(test_dir, '/', kTestVisitFileName), row.names=F, append=F, sep=',')
   save_i <- i
   exec_test <- c(kInputFileName=kTestInputFileName, kExternalFileName=kTestVisitFileName)
-  source(here('R', '1-get-visit.R'))
+  source(here('R', '1-get-visit.R'), encoding="utf-8")
   output_fa <- ReadTargetCsv(kOutputDirpath, kOutputFileName)
   i <- save_i
   print(str_c('test ', i))
