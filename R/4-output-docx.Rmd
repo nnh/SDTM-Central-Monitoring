@@ -87,7 +87,7 @@ editOutputTablebyToxicity <- function(input_df, output_df, target_toxicity, n){
   for (i in 1:nrow(df_by_toxicity)){
     output_row <- c(output_row, paste0(df_by_toxicity[i, 'COUNT'], '(', df_by_toxicity[i, 'PERCENT'], ')'))
     if (nrow(output_df) == 0){
-      output_colnames_1 <- c(output_colnames_1, paste0('GRADE', df_by_toxicity[i, 'GRADE'], '(n(%))'))
+      output_colnames_1 <- c(output_colnames_1, paste0('GRADE', df_by_toxicity[i, 'GRADE'], ' n(%)'))
     }
   }
   if (nrow(output_df) == 0){
