@@ -9,7 +9,7 @@ output: word_document
 #'
 #' @file 4-output-docx.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.16
+#' @date 2021.11.22
 ```
 ```{r setup, include=FALSE}
 kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'

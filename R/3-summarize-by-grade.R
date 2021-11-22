@@ -2,7 +2,7 @@
 #'
 #' @file 3-summarize-by-grade.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.16
+#' @date 2021.11.22
 # ------ settings ------
 kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'extract-grade-observation.csv'
@@ -70,6 +70,7 @@ WriteOutputCsv <- function(df, input_path, filename){
 #' @return Data frame.
 GetToxicityList <- function(input_df){
   aeterm <- unique(input_df$FAOBJ)
+  aeterm <- na.omit(aeterm)
   toxicity_count <- sapply(aeterm, function(x){
     targetToxicity <- subset(input_df, FAOBJ == x & FAORRES >= 3)
     return(nrow(targetToxicity))
@@ -166,14 +167,30 @@ GetGradeList <- function(targetGrade){
   return(res)
 }
 # ------ Main ------
+# For test
+if (exists('exec_test')){
+  SetSettingsForTest(exec_test)
+}
 # If not specified, it will use the same path as 'kInputDirPath'.
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 # Read csv.
-input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
-if (!is.data.frame(input_fa)){
+raw_input_fa <- ReadTargetCsv(kInputDirPath, kInputFileName)
+if (!is.data.frame(raw_input_fa)){
   stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
+input_fa <- raw_input_fa
 colnames(input_fa) <- toupper(colnames(input_fa))
+# If multiple GRADE values exist for the same USUBJID, AETERM, VISITNUM, the worst value is used.
+input_fa$delete_flg <- F
+input_fa <- input_fa[order(input_fa$VISITNUM, input_fa$USUBJID, input_fa$FAOBJ, input_fa$FAORRES , decreasing=T), ]
+for (i in 1:(nrow(input_fa) - 1)){
+  if (input_fa[i, 'USUBJID'] == input_fa[i + 1, 'USUBJID'] &
+      input_fa[i, 'FAOBJ'] == input_fa[i + 1, 'FAOBJ'] &
+      input_fa[i, 'VISITNUM'] == input_fa[i + 1, 'VISITNUM']){
+    input_fa[i + 1, 'delete_flg'] <- T
+  }
+}
+input_fa <- input_fa[!input_fa$delete_flg, ]
 summarize_conditions <- c(SetNameToList(kArmColname, kPercentDigit))
 toxicity_table <- GetToxicityList(input_fa)
 grade_table <- GetGradeList(kTargetGrade)
