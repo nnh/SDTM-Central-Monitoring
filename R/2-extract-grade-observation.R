@@ -2,16 +2,16 @@
 #'
 #' @file 2-extract-grade-observation.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.10
+#' @date 2021.11.16
 # ------ settings ------
-kInputDirPath <- '/Users/mariko/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
+kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'getVisit.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'extract-grade-observation.csv'
 # ------ constants ------
 kCriteriaVariable <- 'FATESTCD'
 kGradeCriteria <- 'GRADE'
-kOutputColnames <- c('usubjid', 'faobj', 'faorres', 'visit', 'visitnum', kCriteriaVariable)
+kOutputColnames <- c('USUBJID', 'FAOBJ', 'FAORRES', 'VISIT', 'VISITNUM', kCriteriaVariable)
 # ------ functions ------
 #' @title readCsvSetEncoding
 #' @description Reads a file with the specified encoding.
@@ -53,15 +53,6 @@ ReadTargetCsv <- function(input_path, filename){
   }
   return(temp)
 }
-#' @title ConvertColumnNameIntoLowerCase
-#' @description Convert data frame column names to lowercase.
-#' @param input_df Data frame to be converted.
-#' @return List of converted data frames and column names before conversion.
-ConvertColumnNameIntoLowerCase <- function(input_df){
-  save_colnames <- colnames(input_df)
-  colnames(input_df) <- tolower(save_colnames)
-  return(list(input_df, save_colnames))
-}
 #' @title WriteOutputCsv
 #' @description Write csv.
 #' @param df The data frame for output.
@@ -80,8 +71,8 @@ if (!is.data.frame(input_fa)){
   stop(print('The input file was not found. Please check the path specification of the input file.'))
 }
 # Extraction of target column.
-input_colnames <- tolower(colnames(input_fa))
-target_df <- input_fa[ , input_colnames %in% tolower(kOutputColnames)]
+colnames(input_fa) <- toupper(colnames(input_fa))
+target_df <- input_fa[ , colnames(input_fa) %in% kOutputColnames]
 output_df <- subset(target_df, FATESTCD == kGradeCriteria)
 output_df <- output_df[ , colnames(output_df) != kCriteriaVariable]
 WriteOutputCsv(output_df, kOutputDirpath, kOutputFileName)
