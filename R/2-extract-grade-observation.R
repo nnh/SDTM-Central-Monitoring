@@ -2,16 +2,14 @@
 #'
 #' @file 2-extract-grade-observation.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.16
+#' @date 2021.11.24
 # ------ settings ------
 kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'getVisit.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'extract-grade-observation.csv'
-# ------ constants ------
 kCriteriaVariable <- 'FATESTCD'
 kGradeCriteria <- 'GRADE'
-kOutputColnames <- c('USUBJID', 'FAOBJ', 'FAORRES', 'VISIT', 'VISITNUM', kCriteriaVariable)
 # ------ functions ------
 #' @title readCsvSetEncoding
 #' @description Reads a file with the specified encoding.
@@ -63,6 +61,10 @@ WriteOutputCsv <- function(df, input_path, filename){
   write.table(df, paste0(input_path, '/', filename), , row.names=F, append=F, sep=',', na='""')
 }
 # ------ Main ------
+# For test
+if (exists('exec_test')){
+  SetSettingsForTest(exec_test)
+}
 # If not specified, it will use the same path as 'kInputDirPath'.
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
 # Read csv.
@@ -72,7 +74,8 @@ if (!is.data.frame(input_fa)){
 }
 # Extraction of target column.
 colnames(input_fa) <- toupper(colnames(input_fa))
-target_df <- input_fa[ , colnames(input_fa) %in% kOutputColnames]
-output_df <- subset(target_df, FATESTCD == kGradeCriteria)
-output_df <- output_df[ , colnames(output_df) != kCriteriaVariable]
+outputColnames <- c('USUBJID', 'FAOBJ', 'FAORRES', 'VISIT', 'VISITNUM', toupper(kCriteriaVariable))
+target_df <- input_fa[ , colnames(input_fa) %in% outputColnames]
+output_df <- subset(target_df, target_df[ , toupper(kCriteriaVariable)] == kGradeCriteria)
+output_df <- output_df[ , colnames(output_df) != toupper(kCriteriaVariable)]
 WriteOutputCsv(output_df, kOutputDirpath, kOutputFileName)
