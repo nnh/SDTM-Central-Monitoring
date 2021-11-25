@@ -2,7 +2,7 @@
 #'
 #' @file 3-summarize-by-grade.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.22
+#' @date 2021.11.25
 # ------ settings ------
 kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
 kInputFileName <- 'extract-grade-observation.csv'
@@ -101,7 +101,7 @@ CreateCountTableByGrade <- function(target_conditions, df, summarize_conditions)
   idx_grade <- 3
   idx_visit <- 4
   target_df <- subset(df, VISITNUM == as.numeric(target_conditions[idx_visitnum]) & FAOBJ == target_conditions[idx_aeterm])
-  digit <- summarize_conditions[['kPercentDigit']]
+  digit <- IsNumeric(summarize_conditions[['kPercentDigit']])
   n <- nrow(target_df)
   if (length(grep('-', target_conditions[idx_grade])) > 0){
     # total
@@ -141,15 +141,18 @@ GetTargetVisitnumList <- function(input_df, target_conditions){
     assign(names(target_conditions[i]), SetEditVisitnumCondition(target_conditions[i]))
   }
   visit_table <- input_df
-  if (is.numeric(kMinVisitnum) & kMinVisitnum >= 0){
-    visit_table <- subset(visit_table, visitnum >= kMinVisitnum)
+  temp <- IsNumeric(kMinVisitnum)
+  if (is.numeric(temp) & temp >= 0){
+    visit_table <- subset(visit_table, VISITNUM >= temp)
   }
-  if (is.numeric(kMaxVisitnum) & kMaxVisitnum >= 0){
-    visit_table <- subset(visit_table, visitnum <= kMaxVisitnum)
+  temp <- IsNumeric(kMaxVisitnum)
+  if (is.numeric(temp) & temp >= 0){
+    visit_table <- subset(visit_table, VISITNUM <= temp)
   }
   for (i in 1:length(kExcludeVisitnum)){
-    if (is.numeric(kExcludeVisitnum[i]) & kExcludeVisitnum[i] >= 0){
-      visit_table <- subset(visit_table, visitnum != kExcludeVisitnum[i])
+    temp <- IsNumeric(kExcludeVisitnum[i])
+    if (is.numeric(temp) & temp >= 0){
+      visit_table <- subset(visit_table, VISITNUM != temp)
     }
   }
   visit_table <- visit_table[ , c('VISITNUM', 'VISIT')]
@@ -166,10 +169,28 @@ GetGradeList <- function(targetGrade){
   res <- data.frame(GRADE=c(targetGrade, paste0(min(targetGrade), '-', max(targetGrade))), GRADE_SORTORDER=1:sortorder_max)
   return(res)
 }
+#' @title IsNumeric
+#' @description If input_value can be converted to a number, convert it to a number. Otherwise, it returns the value as is.
+#' @param input_value Vector of target value.
+#' @return A vector.
+IsNumeric <- function(input_value){
+  temp <- !is.na(suppressWarnings(as.numeric(input_value)))
+  if (temp){
+    return(as.numeric(input_value))
+  } else {
+    return(input_value)
+  }
+}
 # ------ Main ------
 # For test
 if (exists('exec_test')){
   SetSettingsForTest(exec_test)
+  if (exists('exec_test2')){
+    kExcludeVisitnum <- exec_test2
+  }
+  if (exists('exec_test3')){
+    kTargetGrade <- exec_test3
+  }
 }
 # If not specified, it will use the same path as 'kInputDirPath'.
 kOutputDirpath <- ifelse(kOutputDirpath != '', kOutputDirpath, kInputDirPath)
