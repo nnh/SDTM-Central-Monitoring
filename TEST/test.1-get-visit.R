@@ -2,15 +2,15 @@
 #'
 #' @file test.get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.22
+#' @date 2021.11.25
 rm(list=ls())
 # ------ libraries ------
 library(RUnit)
 library(tidyverse)
 library(here)
 # ------ constants ------
-kTestInputFileName <- 'dummyFA.csv'
-kTestVisitFileName <- 'dummyVISIT.csv'
+kTestInputFileName <- 'test1FA.csv'
+kTestVisitFileName <- 'test1VISIT.csv'
 kTestTargetFileName <- 'getVisit.csv'
 # ------ functions ------
 CreateVisitTableForTest <- function(index, res_string, df_visit){
@@ -30,7 +30,7 @@ test_rawdata %>% write.table(str_c(test_dir, '/', kTestInputFileName), append=F,
 visit_base <- data.frame(c(100, 110, 200, 300, 1000, 1300),
                          c('v100', 'v110', 'v200', 'v300', 'v1000', 'v1300'))
 colnames(visit_base) <- c('visitnum', 'visit')
-# 出力結果確認用データフレーム
+# Data frame for output result confirmation
 checkdf <- data.frame(test_rawdata$id,
                       test_rawdata$visitnum,
                       c('v100', 'v100', 'v110', 'v300', NA, NA, NA, 'v1000'))

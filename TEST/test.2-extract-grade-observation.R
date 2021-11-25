@@ -9,8 +9,8 @@ library(RUnit)
 library(tidyverse)
 library(here)
 # ------ constants ------
-kTestRawdataFileName <- 'dummyFA.csv'
-kTestVisitFileName <- 'dummyVisit.csv'
+kTestRawdataFileName <- 'test2FA.csv'
+kTestVisitFileName <- 'test2Visit.csv'
 kTestInputFileName <- 'getVisit.csv'
 kTestTargetFileName <- 'extract-grade-observation.csv'
 # ------ init ------
