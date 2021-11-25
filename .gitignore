@@ -41,5 +41,6 @@ vignettes/*.pdf
 !/TEST/temp/encode_bom.csv
 *.docx
 !/TEST/temp/compare_summarize-by-grade.csv
-!/TEST/temp/dummy_extract-grade-observation.csv
 *.xlsx
+!/TEST/temp/dummyFA.csv
+!/TEST/temp/dummyVISIT.csv

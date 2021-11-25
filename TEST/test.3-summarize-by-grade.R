@@ -43,16 +43,6 @@ test_dir = CreateTestFolder(here('test', 'temp'))
 # ------ main ------
 # run test
 error_f <- T
-# ### Test using anonymized rawdata ###
-print('### Create a dummy file for testing. ###')
-# source(here('TEST', 'test.inputfile-edit.R'), encoding="utf-8")
-exec_test <- c(kInputFileName='dummy_extract-grade-observation.csv', dummy='')
-source(here('R', '3-summarize-by-grade.R'), encoding="utf-8")
-rm(exec_test)
-test_input <- ReadTargetCsv(test_dir, kTestTargetFileName)
-compare_input <- ReadTargetCsv(test_dir, 'compare_summarize-by-grade.csv')
-res <- checkEquals(test_input, compare_input) %>% print()
-error_f <- ifelse(!res, res, error_f)
 print('### Worst grade. ###')
 USUBJID <-  c('1', '1', '1', '2', '1', '1')
 FAOBJ <- c('ae1', 'ae1', 'ae1', 'ae1', 'ae1', 'ae0')
@@ -152,5 +142,16 @@ error_f <- ExecTest3(df, compare_input, c(kPercentDigit=2, kInputFileName='test2
 PERCENT <- c(50, 17, 17, 83)
 compare_input <- data.frame(VISITNUM, VISIT, AETERM, GRADE, N, COUNT, PERCENT)
 error_f <- ExecTest3(df, compare_input, c(kPercentDigit=0, kInputFileName='test2_extract-grade-observation.csv'), NA, NA)
+# ### Test using anonymized rawdata ###
+print('### Create a dummy file for testing. ###')
+exec_test <- c(kInputFileName=kTestRawdataFileName, kExternalFileName=kTestVisitFileName)
+source(here('R', '1-get-visit.R'), encoding="utf-8")
+rm(exec_test)
+source(here('R', '2-extract-grade-observation.R'), encoding="utf-8")
+source(here('R', '3-summarize-by-grade.R'), encoding="utf-8")
+test_input <- ReadTargetCsv(test_dir, kTestTargetFileName)
+compare_input <- ReadTargetCsv(test_dir, 'compare_summarize-by-grade.csv')
+res <- checkEquals(test_input, compare_input) %>% print()
+error_f <- ifelse(!res, res, error_f)
 PrintOverallResults(error_f)
 print('*** test.summarize-by-grade end ***')
