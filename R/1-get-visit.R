@@ -2,12 +2,12 @@
 #'
 #' @file get-visit.R
 #' @author Mariko Ohtsuka
-#' @date 2021.11.16
+#' @date 2021.11.30
 # ------ settings ------
 kInputDirPath <- '~/Documents/GitHub/SDTM-Central-Monitoring/TEST/temp/'
-kInputFileName <- 'rawFA.csv'
+kInputFileName <- 'dummyFA.csv'
 kExternalDirPath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
-kExternalFileName <- 'rawFA.csv'
+kExternalFileName <- 'dummyVISIT.csv'
 kOutputDirpath <- ''  # If it is blank, it is treated as the same as the path set in the "kInputDirPath" variable.
 kOutputFileName <- 'getVisit.csv'
 # ------ constants ------
