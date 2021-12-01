@@ -1,14 +1,17 @@
 # SDTM-Central-Monitoring
 ## 概要
-VISITの導出、必要なオブザベーションの抽出、GRADE毎の集計、集計結果のレポート出力を行うプログラム群です。  
-実行プログラムはRディレクトリ配下に格納されています。 それぞれ以下を実行するプログラム群です。
+それぞれ以下の処理を実行するプログラム群です。  
 * VISITの導出（1-get-visit.R）
-* 必要なオブザベーションの抽出（2-ectract-grade-observation.R）
+* 必要なオブザベーションの抽出（2-exctract-grade-observation.R）
 * VISITおよび有害事象のGradeに関する頻度集計（3-summarize-by-grade.R）
 * GRADE毎の集計結果についてのレポート出力（4-output-docx.Rmd）   
 
+実行プログラムはRディレクトリ配下に格納されています。   
 各プログラムは独立しているので、必要なプログラムだけ実行可能です。詳細は[wiki](https://github.com/nnh/SDTM-Central-Monitoring/wiki)に記載しました。  
-テスト用入力ファイルはTEST/temp/dummyFA.csv,TEST/temp/dummyVISIT.csvです。   
+## 入出力ファイル（例）
+入力ファイルの例として、TEST/temp/ディレクトリに'dummyFA.csv', 'dummyVISIT.csv'を格納しています。   
+出力ファイルの例として、TEST/temp/ディレクトリに'compare_summarize-by-grade.csv'を格納しています。  
+出力ファイルは上記のテスト用入力ファイルを入力とし、1-get-visit.R, 2-exctract-grade-observation.R, 3-summarize-by-grade.Rを順に実行した場合のイメージです。  
 ## リポジトリのディレクトリ構造
 ```
 .
