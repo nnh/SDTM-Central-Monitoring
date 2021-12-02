@@ -39,3 +39,10 @@
     ├── test.common.R
     └── test.inputfile-edit.R
 ```
+## 動作確認環境（2021.12.2時点）
+* OS  
+ macOS Big Sur 11.6
+* RStudio   
+ Version 1.4.1717
+* R  
+ version 4.1.1 (2021-08-10)
